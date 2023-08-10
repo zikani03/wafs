@@ -50,51 +50,6 @@ func ReadFileString(this js.Value, args []js.Value) interface{} {
 }
 `
 
-var jsTemplate = `
-const go = new Go(); // Defined in wasm_exec.js
-const WASM_URL = 'module.wasm'; // TODO: get module name
-
-function addScript(fileName) {
-    var sel = document.createElement("script");
-    let fileData = wafs_ReadFileString(fileName)
-    sel.innerText = fileData;
-    document.body.appendChild(sel)
-}
-
-function addImg(fileName, parentNode) {
-    var sel = document.createElement("img");
-    let fileData = wafs_ReadFileBas64(fileName)
-    sel.setAttribute("src",  "data:application/octet-stream;base64," + fileData)
-    if (parentNode) {
-        parentNode.appendChild(sel)
-    } else {
-        document.body.appendChild(sel)
-    }
-}
-
-var wasm;
-if ('instantiateStreaming' in WebAssembly) {
-    WebAssembly.instantiateStreaming(fetch(WASM_URL), go.importObject).then(function (obj) {
-        wasm = obj.instance;
-        go.run(wasm);
-    }).catch(err => {
-        console.log(err)
-    })
-} else {
-    fetch(WASM_URL).then(resp =>
-        resp.arrayBuffer()
-    ).then(bytes =>
-        WebAssembly.instantiate(bytes, go.importObject).then(function (obj) {
-            wasm = obj.instance;
-            go.run(wasm);
-
-        })
-    ).catch(err => {
-        console.log(err)
-    })
-}
-`
-
 // Basically this server does the following
 // 1. Receieves a request containing files to process (multi-part request)
 // 2. Puts those files into a directory <project>/assets
@@ -102,14 +57,6 @@ if ('instantiateStreaming' in WebAssembly) {
 // 4. Compiles the module using tinygo to create a wasm module <project.wasm>
 // 5. Serves that wasm file back to the user as a download using content-disposition
 // 5.1. Alternatively generates a page with instructions on how to use the wasm module.
-
-// Notes: The generated wasm module comes with a javascript file, project.init.js
-// that file does the following:
-// 1. instantiates the Go wasm module if possible (wasm_exec.js is prepended to the file)
-// 2. creates functions on the window object under window.ProjectName = { func: wasmFunc, }
-// 3. Errors out if the above is not possible.
-// 4. Provides "instantiation hooks" to allow user to do some actions onload and also
-// 5. Provides a fetch override hook to allow overriding fetch behavior.
 func main() {
 	app := fiber.New()
 
