@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WAFS</title>
+</head>
+<body>
+    
+    <div id="form-wrapper"></div>
+    
+    <script src="js/wasmwebfs.js"></script>
+    <script>
+        loadWASMModule("/module.wasm").then(function(module) {
+            document.getElementById('form-wrapper').innerHTML = module.readFileAsString("form.html")
+            module.addScript("test.js")
+        })
+    </script>
+</body>
+</html>
